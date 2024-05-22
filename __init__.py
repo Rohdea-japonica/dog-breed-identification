@@ -22,8 +22,8 @@ if __name__ == "__main__":
         device = "cpu"
 
     # 获取训练数据集
-    train_dataset = MyDataset()
-    train_dataset.getdata("../data", module)
+    train_dataset = MyDataset(module)
+    train_dataset.getdata("./data", module)
     train_loader = DataLoader(train_dataset, batch_size, drop_last=False)
 
     # 加载模型
@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     if module == "train":
         model.train()  # 进入训练模式
-    elif module == "dev":
+    elif module == "test":
         model.eval()   # 进入测试模式
 
     # 开始训练
