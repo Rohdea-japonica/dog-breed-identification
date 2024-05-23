@@ -7,17 +7,17 @@ class OCR_Model(nn.Module):
         super().__init__()
         self.backbone = nn.Sequential(
             # Conv1
-            nn.Conv2d(3, 64, 2, 1, 1),  # size = 64*64*3
+            nn.Conv2d(3, 64, 4, 2, 0),  # size = 500*500*3
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(4, 2, 1),  # size = 64*64*64
+            nn.MaxPool2d(4, 2, 0),  # size = 249*249*64
             # Conv2
-            nn.Conv2d(64, 128, 2, 1, 1),  # size = 32*32*64
+            nn.Conv2d(64, 128, 5, 2, 0),  # size = 123*123*64
             nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.MaxPool2d(4, 2, 1),  # size = 32*32*128
+            nn.MaxPool2d(4, 2, 1),  # size = 60*60*128
             # Conv3
-            nn.Conv2d(128, 256, 2, 1, 1),  # size = 16*16*128
+            nn.Conv2d(128, 256, 2, 2, 1),  # size = 30*30*128
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(4, 1, 1),  # size = 16*16*256
@@ -42,7 +42,7 @@ class OCR_Model(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.5),
             # FC3
-            nn.Linear(1024, 15),
+            nn.Linear(1024, 120),
         )
 
     def forward(self, x):
