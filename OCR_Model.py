@@ -28,7 +28,7 @@ class OCR_Model(nn.Module):
             nn.MaxPool2d(2, 1, 0),  # size = 9*9*512
             # Conv5
             nn.Conv2d(512, 512, 2, 1, 0),  # size = 8*8*512
-            nn.BatchNorm2d(1024),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(2, 1, 0),  # size = 7*7*512  ->  output = 6*6*512
         )
