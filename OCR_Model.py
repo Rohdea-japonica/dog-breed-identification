@@ -34,15 +34,23 @@ class OCR_Model(nn.Module):
         )
         self.dense = nn.Sequential(
             # FC1
-            nn.Linear(16384, 4096),
+            nn.Linear(16384, 8192),
             nn.ReLU(),
             nn.Dropout(0.5),
             # FC2
-            nn.Linear(4096, 2048),
+            nn.Linear(8192, 4096),
             nn.ReLU(),
             nn.Dropout(0.5),
             # FC3
-            nn.Linear(2048, 120),
+            nn.Linear(4096, 2048),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            # FC4
+            nn.Linear(2048, 1024),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            # FC5
+            nn.Linear(1024, 120),
         )
 
     def forward(self, x):

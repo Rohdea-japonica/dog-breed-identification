@@ -9,6 +9,7 @@ import torch.nn as nn
 from OCR_Model import OCR_Model
 
 
+# 以下两个函数已经过检验，图片地址与标签一一对应，并无差错
 def get_dictionary(csv_path):
     content = pd.read_csv(csv_path)
     breed = content["breed"]
