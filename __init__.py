@@ -6,7 +6,7 @@ from MyDataset import MyDataset
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
-from OCR_Model import OCR_Model
+from ResNet import ResNet
 
 
 # 以下两个函数已经过检验，图片地址与标签一一对应，并无差错
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size, drop_last=False)
     test_loader = DataLoader(test_dataset, batch_size, drop_last=False)
     # 加载模型
-    model = OCR_Model().to(device)
+    model = ResNet().to(device)
     criterion = nn.CrossEntropyLoss()  # 设置误差函数
     params = filter(lambda p: p.requires_grad, model.parameters())  # 设置模型参数跟踪
     optimizer = optim.Adam(params, lr=lr, weight_decay=1e-4)  # 优化器

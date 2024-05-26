@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 # N=(W-F+2P)/S+1
-class OCR_Model(nn.Module):
+class AlexNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.backbone = nn.Sequential(
