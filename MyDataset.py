@@ -9,6 +9,7 @@ class MyDataset(Dataset):
     def __init__(self, images, labels, mode):
         self.images = images
         self.labels = labels
+        self.mode = mode
         if mode == 'train':  # 80%
             self.images = self.images[:int(0.9 * len(self.images))]
             self.labels = self.labels[:int(0.9 * len(self.labels))]
