@@ -134,6 +134,7 @@ if __name__ == "__main__":
             correct = 0
             for x in test_loader:
                 pred = model(x.to(device))
+                pred = nn.functional.softmax(pred)
                 labels += pred.tolist()
         image_names = []
         for root, sub_folder, file_list in os.walk("./data/test"):
@@ -148,3 +149,8 @@ if __name__ == "__main__":
             for idx in range(len(label)):
                 para[dict_key[idx]] = label[idx]
             df = pd.DataFrame([para])
+            num += 1
+            if num == 0:
+                df.to_csv("test_dict.csv", mode='a', header=True)
+            else:
+                df.to_csv("test_dict.csv", mode='a', header=False)
