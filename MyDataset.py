@@ -13,7 +13,7 @@ class MyDataset(Dataset):
         if mode == 'train':  # 80%
             self.images = self.images[:int(0.9 * len(self.images))]
             self.labels = self.labels[:int(0.9 * len(self.labels))]
-        elif mode == 'test':  # 20%
+        elif mode == 'dev':  # 20%
             self.images = self.images[int(0.9 * len(self.images)):]
             self.labels = self.labels[int(0.9 * len(self.labels)):]
 

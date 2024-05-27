@@ -1,7 +1,6 @@
 import os
-import random
-
 import torch
+import random
 import pandas as pd
 from torch import optim
 from MyDataset import MyDataset
@@ -63,9 +62,9 @@ if __name__ == "__main__":
     # 获取训练数据集
     images, labels = getdata("./data")
     train_dataset = MyDataset(images, labels, "train")
-    test_dataset = MyDataset(images, labels, "test")
+    dev_dataset = MyDataset(images, labels, "dev")
     train_loader = DataLoader(train_dataset, batch_size, drop_last=False)
-    test_loader = DataLoader(test_dataset, batch_size, drop_last=False)
+    dev_loader = DataLoader(dev_dataset, batch_size, drop_last=False)
     # 加载模型
     model = ResNet().to(device)
     criterion = nn.CrossEntropyLoss()  # 设置误差函数
@@ -86,8 +85,6 @@ if __name__ == "__main__":
         for epoch in range(epochs):
             count = 0
             correct = 0
-            test_count = 0
-            test_correct = 0
             for x, y in train_loader:
                 count += len(y)
                 pred = model(x.to(device))
@@ -104,15 +101,16 @@ if __name__ == "__main__":
             torch.save(state_dict, "./model.pt")
         print("Finished!!!")
 
-    elif module == "test":
-        model.eval()  # 进入测试模式
-        count = 0
-        correct = 0
-        for x, y in test_loader:
-            count += len(y)
-            pred = model(x.to(device))
-            label = pred.argmax(1)
-            for i in range(len(y)):
-                if y[i] == label[i]:
-                    correct += 1
-        print(" Accuracy is :", correct / count)
+    elif module == "dev":
+        with torch.no_grad():
+            model.eval()  # 进入测试模式
+            count = 0
+            correct = 0
+            for x, y in dev_loader:
+                count += len(y)
+                pred = model(x.to(device))
+                label = pred.argmax(1)
+                for i in range(len(y)):
+                    if y[i] == label[i]:
+                        correct += 1
+            print(" Accuracy is :", correct / count)
