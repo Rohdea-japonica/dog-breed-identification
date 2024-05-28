@@ -27,7 +27,7 @@ class ResNet(nn.Module):
     def __init__(self):
         super(ResNet, self).__init__()
         self.pre = nn.Sequential(
-            nn.Conv2d(3, 64, 4, 2, 0),
+            nn.Conv2d(3, 64, 7, 2, 0),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(3, 2, 0)
