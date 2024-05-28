@@ -98,9 +98,11 @@ if __name__ == "__main__":
             correct = 0
             for x, y in train_loader:
                 count += len(y)
+                # 前向传播
                 pred = model(x.to(device))
-                optimizer.zero_grad()
                 loss = criterion(pred, y.to(device))
+                # 反向传播
+                optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()  # 参数修改
                 label = pred.argmax(1)
@@ -113,7 +115,6 @@ if __name__ == "__main__":
             torch.save(state_dict, "./model.pt")
         print("Finished!!!")
 
-    elif module == "dev":
         with torch.no_grad():
             model.eval()  # 进入测试模式
             count = 0
