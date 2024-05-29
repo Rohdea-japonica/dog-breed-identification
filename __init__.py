@@ -1,7 +1,8 @@
 import os
 import torch
-import random
+
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from torch import optim
 from MyDataset import MyDataset
 from torch.utils.data import DataLoader
@@ -40,10 +41,6 @@ def getdata(data_path, module):
             file_path = image_id[i] + ".jpg"
             labels.append(dictionary[breed[i]])
             image_names.append(os.path.join(img_root, file_path))
-        random.seed(2)
-        random.shuffle(image_names)
-        random.seed(2)
-        random.shuffle(labels)
         return image_names, labels
     elif module == "test":
         img_root = os.path.join(data_path, "test")
@@ -68,8 +65,10 @@ if __name__ == "__main__":
 
     # 获取训练数据集
     images, labels = getdata("./data", module)
-    train_dataset = MyDataset(images, labels, "train")
-    dev_dataset = MyDataset(images, labels, "dev")
+    x_train, x_test, y_train, y_test = train_test_split(images, labels, test_size=0.25, train_size=0.75,
+                                                        shuffle=True, random_state=12)
+    train_dataset = MyDataset(x_train, y_train, "train")
+    dev_dataset = MyDataset(x_test, y_test, "dev")
     train_loader = DataLoader(train_dataset, batch_size, drop_last=False)
     dev_loader = DataLoader(dev_dataset, batch_size, drop_last=False)
     # 获取预测数据集
