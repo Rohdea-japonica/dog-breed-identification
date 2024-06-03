@@ -1,12 +1,12 @@
 import os
+import random
 import torch
-
 import pandas as pd
+import torch.nn as nn
 from sklearn.model_selection import train_test_split
 from torch import optim
 from MyDataset import MyDataset
 from torch.utils.data import DataLoader
-import torch.nn as nn
 from ResNet import ResNet
 
 
@@ -48,6 +48,13 @@ def getdata(data_path, module):
         for root, sub_folder, file_list in os.walk(img_root):
             image_names += [os.path.join(root, file_path) for file_path in file_list]
         return image_names
+
+
+def shuffle_loader(data_loader):
+    random_seed = random.random()
+    random.seed(random_seed)
+    random.shuffle(data_loader)
+    return data_loader
 
 
 if __name__ == "__main__":
@@ -112,6 +119,8 @@ if __name__ == "__main__":
             state_dict = {"model": model.state_dict(), "optimizer": optimizer.state_dict(),
                           "epoch": epoch + 1 + pre_epoch}
             torch.save(state_dict, "./model.pt")
+            if (epoch + pre_epoch + 1) % 20 == 0:
+                train_loader = shuffle_loader(train_loader)
         print("Finished!!!")
 
         with torch.no_grad():
