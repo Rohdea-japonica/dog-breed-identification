@@ -8,6 +8,7 @@ from torch import optim
 from MyDataset import MyDataset
 from torch.utils.data import DataLoader
 from ResNet import ResNet
+from torchvision import models
 
 
 # 以下两个函数已经过检验，图片地址与标签一一对应，并无差错
@@ -50,19 +51,24 @@ def getdata(data_path, module):
         return image_names
 
 
-def shuffle_loader(data_loader):
+def shuffle_loader(images, labels, batch_size):
     random_seed = random.random()
     random.seed(random_seed)
-    random.shuffle(data_loader)
+    random.shuffle(images)
+    random.seed(random_seed)
+    random.shuffle(labels)
+    print("Shuffle the train_loader!! The random_seed is: ", random_seed)
+    dataset = MyDataset(images, labels, "train")
+    data_loader = DataLoader(dataset, batch_size, drop_last=False)
     return data_loader
 
 
 if __name__ == "__main__":
     # 一些变量
     device = ""
-    lr = 0.01  # 学习率
+    lr = 0.001  # 学习率
     pre_epoch = 0  # 前一次训练的轮数
-    batch_size = 512  # batch中的数据量
+    batch_size = 128  # batch中的数据量
     module = input("请输入训练模式：")
 
     if torch.cuda.is_available():  # 训练处理器
@@ -71,19 +77,21 @@ if __name__ == "__main__":
         device = "cpu"
 
     # 获取训练数据集
-    images, labels = getdata("./data", module)
-    x_train, x_test, y_train, y_test = train_test_split(images, labels, test_size=0.25, train_size=0.75,
-                                                        shuffle=True, random_state=12)
-    train_dataset = MyDataset(x_train, y_train, "train")
-    dev_dataset = MyDataset(x_test, y_test, "dev")
-    train_loader = DataLoader(train_dataset, batch_size, drop_last=False)
-    dev_loader = DataLoader(dev_dataset, batch_size, drop_last=False)
-    # 获取预测数据集
-    test_images = getdata("./data", module)
-    test_dataset = MyDataset(test_images, "", "test")
-    test_loader = DataLoader(test_dataset, batch_size, drop_last=False)
+    if module == "train" or module == "dev":
+        images, labels = getdata("./data", "train")
+        x_train, x_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, train_size=0.8,
+                                                            shuffle=True, random_state=12)
+        train_dataset = MyDataset(x_train, y_train, "train")
+        dev_dataset = MyDataset(x_test, y_test, "dev")
+        train_loader = DataLoader(train_dataset, batch_size, drop_last=False)
+        dev_loader = DataLoader(dev_dataset, batch_size, drop_last=False)
+    elif module == "test":
+        # 获取预测数据集
+        test_images = getdata("./data", module)
+        test_dataset = MyDataset(test_images, "", "test")
+        test_loader = DataLoader(test_dataset, batch_size, drop_last=False)
     # 加载模型
-    model = ResNet().to(device)
+    model = models.resnet34().to(device)
     criterion = nn.CrossEntropyLoss()  # 设置误差函数
     params = filter(lambda p: p.requires_grad, model.parameters())  # 设置模型参数跟踪
     optimizer = optim.Adam(params, lr=lr, weight_decay=1e-4)  # 优化器
@@ -91,15 +99,14 @@ if __name__ == "__main__":
         position = torch.load("./model.pt", map_location=device)
         model.load_state_dict(position["model"])
         pre_epoch = position["epoch"]
-        optimizer.load_state_dict(position["optimizer"])
     except FileNotFoundError:
         print("Not download model!")
 
     if module == "train":
-        model.train()  # 进入训练模式
         epochs = int(input("请输入训练轮数："))
         # 开始训练
         for epoch in range(epochs):
+            model.train()  # 进入训练模式
             count = 0
             correct = 0
             for x, y in train_loader:
@@ -115,14 +122,30 @@ if __name__ == "__main__":
                 for i in range(len(y)):
                     if y[i] == label[i]:
                         correct += 1
-            print("Current epoch is :", epoch + pre_epoch + 1, " Train_Accuracy is :", correct / count)
-            state_dict = {"model": model.state_dict(), "optimizer": optimizer.state_dict(),
-                          "epoch": epoch + 1 + pre_epoch}
+            # 保存模型
+            state_dict = {"model": model.state_dict(), "epoch": epoch + 1 + pre_epoch}
             torch.save(state_dict, "./model.pt")
-            if (epoch + pre_epoch + 1) % 20 == 0:
-                train_loader = shuffle_loader(train_loader)
+            # 验证
+            model.eval()  # 进入测试模式
+            Ycount = 0
+            Ycorrect = 0
+            for x, y in dev_loader:
+                Ycount += len(y)
+                pred = model(x.to(device))
+                label = pred.argmax(1)
+                for i in range(len(y)):
+                    if y[i] == label[i]:
+                        Ycorrect += 1
+            print("Current epoch is :", epoch + pre_epoch + 1, " Train_Accuracy is :", correct / count,
+                  " Dev_Accuracy is :", Ycorrect / Ycount)
+
+            if correct / count > 0.9 or correct / count - Ycorrect / Ycount > 0.2:
+                train_loader = shuffle_loader(x_train, y_train, batch_size)
+            elif Ycorrect / Ycount > 0.85:
+                break;
         print("Finished!!!")
 
+    elif module == "dev":
         with torch.no_grad():
             model.eval()  # 进入测试模式
             count = 0
@@ -136,14 +159,14 @@ if __name__ == "__main__":
                         correct += 1
             print(" Accuracy is :", correct / count)
     elif module == "test":
-        labls = []
+        labels = []
         with torch.no_grad():
             model.eval()  # 进入测试模式
             count = 0
             correct = 0
             for x in test_loader:
                 pred = model(x.to(device))
-                pred = nn.functional.softmax(pred)
+                pred = nn.functional.softmax(pred, dim=0)
                 labels += pred.tolist()
         image_names = []
         for root, sub_folder, file_list in os.walk("./data/test"):
@@ -151,15 +174,20 @@ if __name__ == "__main__":
         dictionary = get_dictionary("./data/labels.csv")
         dict_key = list(dictionary.keys())
         # 循环进入所有的标签概率列表
-        num = 0
+        flag = True
+        num = 0  # 用于对图片名进行标识
         for label in labels:
             # 每个列表的前面加上图片名
-            para = {"id": image_names[num]}
+            para = {"id": image_names[num].split('.')[0]}
             for idx in range(len(label)):
-                para[dict_key[idx]] = label[idx]
-            df = pd.DataFrame([para])
+                lt = []
+                lt.append(label[idx])
+                para[dict_key[idx]] = lt
+            df = pd.DataFrame(para)
             num += 1
-            if num == 0:
-                df.to_csv("test_dict.csv", mode='a', header=True)
+            if flag:
+                df.to_csv("test_dict.csv", mode='w', header=True, index=False)
+                flag = False
             else:
-                df.to_csv("test_dict.csv", mode='a', header=False)
+                df.to_csv("test_dict.csv", mode='a', header=False, index=False)
+        print("Finished")
